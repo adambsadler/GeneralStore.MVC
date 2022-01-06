@@ -1,6 +1,7 @@
 ﻿using GeneralStore.MVC.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -78,6 +79,21 @@ namespace GeneralStore.MVC.Controllers
             if (product == null)
             {
                 return HttpNotFound();
+            }
+            return View(product);
+        }
+
+        // POST: Edit
+        // Product/Edit/{id}
+        [HttpPost, ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                _db.Entry(product).State = EntityState.Modified;
+                _db.SaveChanges();
+                return RedirectToAction("Index");
             }
             return View(product);
         }
