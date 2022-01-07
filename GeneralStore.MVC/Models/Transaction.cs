@@ -23,22 +23,12 @@ namespace GeneralStore.MVC.Models
         public virtual Product Product { get; set; }
         [Required]
         [Display(Name = "Quantity")]
-        // [CustomValidation(typeof(ValidationResult), "ValidateInventory")]
         public int ItemCount { get; set; }
         [Required]
+        [Column(TypeName = "datetime2")]
         [Display(Name = "Transaction Date")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime DateOfTransaction { get; set; }
-
-        //public ValidationResult ValidateInventory(int productOrdered)
-        //{
-        //    if (productOrdered > Product.InventoryCount)
-        //    {
-        //        return new ValidationResult("There is not enough inventory for this order.");
-        //    }
-
-        //    return ValidationResult.Success;
-        //}
     }
 }

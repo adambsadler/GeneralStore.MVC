@@ -1,6 +1,7 @@
 ﻿using GeneralStore.MVC.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -29,6 +30,7 @@ namespace GeneralStore.MVC.Controllers
         // POST: Create
         // Transaction/Create
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Create(Transaction transaction)
         {
             if (ModelState.IsValid)
@@ -41,8 +43,14 @@ namespace GeneralStore.MVC.Controllers
                     _db.SaveChanges();
                     return RedirectToAction("Index");
                 }
+                else
+                {
+                    ModelState.AddModelError("ItemCount", "There is not enough inventory to complete this transaction.");
+                    
+                }
             }
-            // Still need to figure out how to tell the user that there isn't enough inventory
+            ViewBag.Customers = new SelectList(_db.Customers.OrderBy(c => c.FirstName).ToList(), "CustomerID", "FullName");
+            ViewBag.Products = new SelectList(_db.Products.OrderBy(p => p.Name).ToList(), "ProductId", "Name");
             return View(transaction);
         }
 
@@ -74,6 +82,67 @@ namespace GeneralStore.MVC.Controllers
             product.InventoryCount += transaction.ItemCount;
             _db.SaveChanges();
             return RedirectToAction("Index");
+        }
+
+        // GET: Edit
+        // Transaction/Edit/{id}
+        public ActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(System.Net.HttpStatusCode.BadRequest);
+            }
+            Transaction transaction = _db.Transactions.Find(id);
+            if (transaction == null)
+            {
+                return HttpNotFound();
+            }
+            ViewBag.Customers = new SelectList(_db.Customers.OrderBy(c => c.FirstName).ToList(), "CustomerID", "FullName");
+            ViewBag.Products = new SelectList(_db.Products.OrderBy(p => p.Name).ToList(), "ProductId", "Name");
+            return View(transaction);
+        }
+
+        // POST: Edit
+        // Transaction/Edit/{id}
+        [HttpPost, ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(Transaction transaction)
+        {
+            if (ModelState.IsValid)
+            {
+                var tempTransaction = _db.Transactions.Find(transaction.OrderID);
+                _db.Entry(tempTransaction).State = System.Data.Entity.EntityState.Detached;
+                int productCountBefore = tempTransaction.ItemCount;
+                var product = _db.Products.Find(transaction.ProductID);
+
+                if (transaction.ItemCount <= (productCountBefore + product.InventoryCount))
+                {
+                    _db.Entry(transaction).State = EntityState.Modified;
+                    product.InventoryCount += productCountBefore;
+                    product.InventoryCount -= transaction.ItemCount;
+                    _db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+            }
+            ViewBag.Customers = new SelectList(_db.Customers.OrderBy(c => c.FirstName).ToList(), "CustomerID", "FullName");
+            ViewBag.Products = new SelectList(_db.Products.OrderBy(p => p.Name).ToList(), "ProductId", "Name");
+            return View(transaction);
+        }
+
+        // GET: Details
+        // Transaction/Details/{id}
+        public ActionResult Details(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(System.Net.HttpStatusCode.BadRequest);
+            }
+            Transaction transaction = _db.Transactions.Find(id);
+            if (transaction == null)
+            {
+                return HttpNotFound();
+            }
+            return View(transaction);
         }
     }
 }
